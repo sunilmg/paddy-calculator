@@ -21,11 +21,11 @@ body {
     "Helvetica Neue", Arial;
   margin: 0;
   min-height: 100vh;
-  /* center the app horizontally and vertically */
+  /* center the app horizontally; on short/mobile viewports align to top to avoid clipping */
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 24px;
+  align-items: flex-start;
+  padding: 24px 12px;
   background-color: var(--bg);
   /* background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); */
   color: #0f172a;
@@ -38,12 +38,10 @@ body {
   width: 100%;
 }
 
-/* If viewport height is small, align to top to avoid clipping */
-@media (max-height: 700px) {
+/* On tall viewports (desktop), vertically center the app for a nicer layout */
+@media (min-height: 800px) {
   body {
-    align-items: flex-start;
-    padding-top: 24px;
-    padding-bottom: 24px;
+    align-items: center;
   }
 }
 header {
@@ -72,6 +70,10 @@ header h1 {
   padding: 18px;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 .results {
   background: linear-gradient(
@@ -87,6 +89,10 @@ header h1 {
   display: flex;
   gap: 12px;
 }
+/* Allow flex children (labels/inputs) to shrink on small viewports */
+.row label {
+  min-width: 0;
+}
 label {
   flex: 1;
   display: flex;
@@ -100,6 +106,15 @@ input {
   border: 1px solid #e6e9ef;
   background: #fff;
   color: #0f172a;
+}
+select,
+input,
+.adj-label,
+.adj-amount,
+.adj-note {
+  max-width: 100%;
+  min-width: 0; /* important for flex children to allow shrinking */
+  box-sizing: border-box;
 }
 input::placeholder {
   color: #c7cbd6;
@@ -122,6 +137,13 @@ input::placeholder {
   gap: 8px;
   margin-top: 10px;
   align-items: center;
+}
+.adj-note {
+  flex: 1.5;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e6e9ef;
+  background: #fff;
 }
 .adj-label {
   flex: 1;
@@ -196,6 +218,12 @@ input::placeholder {
 .pl-row.zeros {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
     "Courier New", monospace;
+}
+
+.pl-row.adj-note-row .pl-left {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
 }
 
 /* Ensure print wrapper looks correct on screen and print */
@@ -287,6 +315,10 @@ input::placeholder {
   font-size: 0.95rem;
   color: var(--muted);
 }
+.final-display .line.note {
+  padding-top: 0;
+  font-style: italic;
+}
 .final-display .separator {
   height: 1px;
   background: linear-gradient(90deg, #0000, #0005, #0000);
@@ -307,6 +339,12 @@ input::placeholder {
   .calculator {
     grid-template-columns: 1fr;
   }
+}
+
+/* Prevent accidental horizontal overflow on small devices */
+html,
+body {
+  overflow-x: hidden;
 }
 
 /* Print rules: place the .print-target into one of four quadrants on A4 */

@@ -36,6 +36,7 @@ export default function App() {
     _initial.ratePerQuintal ?? ""
   ); // per 100kg
   const [labourPerBag, setLabourPerBag] = useState(_initial.labourPerBag ?? "");
+  const [tarePerBag, setTarePerBag] = useState(_initial.tarePerBag ?? 2);
   const [adjustments, setAdjustments] = useState(_initial.adjustments ?? []); // {id, label, amount}
   const [printPosition, setPrintPosition] = useState("top-right");
   const rootRef = useRef(null);
@@ -46,6 +47,7 @@ export default function App() {
       totalWeight,
       bags,
       ratePerQuintal,
+      tarePerBag,
       labourPerBag,
       adjustments,
       customerName,
@@ -61,6 +63,7 @@ export default function App() {
     bags,
     ratePerQuintal,
     labourPerBag,
+    tarePerBag,
     adjustments,
     customerName,
     date,
@@ -74,6 +77,7 @@ export default function App() {
         label: "Borrow",
         amount: "",
         sign: "-",
+        note: "",
       },
     ]);
   };
@@ -113,8 +117,8 @@ export default function App() {
     const rate = numeric(ratePerQuintal);
     const labour = numeric(labourPerBag);
 
-    const tarePerBag = 2; // 2 KP (2 kg per bag)
-    const totalTare = B * tarePerBag;
+    const tarePerBagVal = numeric(tarePerBag) || 0; // configured tare per bag (kg)
+    const totalTare = B * tarePerBagVal;
     const netWeight = Math.max(0, W - totalTare);
 
     // amount is per quintal (100kg): (netWeight / 100) * rate
@@ -142,7 +146,14 @@ export default function App() {
       adjSigned,
       final,
     };
-  }, [totalWeight, bags, ratePerQuintal, labourPerBag, adjustments]);
+  }, [
+    totalWeight,
+    bags,
+    ratePerQuintal,
+    labourPerBag,
+    tarePerBag,
+    adjustments,
+  ]);
 
   // Print handling: prepare scaled print in selected quadrant
   const prepareAndPrint = () => {
@@ -296,6 +307,18 @@ export default function App() {
             </label>
           </div>
 
+          <div className="row">
+            <label>
+              Tare per bag (kg)
+              <input
+                inputMode="decimal"
+                value={tarePerBag}
+                onChange={(e) => setTarePerBag(e.target.value)}
+                placeholder="2"
+              />
+            </label>
+          </div>
+
           <div className="adjustments">
             <div className="adjustments-header">
               <h3>Borrow / Adjustments</h3>
@@ -338,6 +361,14 @@ export default function App() {
                     updateAdjustment(a.id, "amount", e.target.value)
                   }
                   placeholder="0"
+                />
+                <input
+                  className="adj-note"
+                  value={a.note || ""}
+                  onChange={(e) =>
+                    updateAdjustment(a.id, "note", e.target.value)
+                  }
+                  placeholder="Note (optional)"
                 />
                 <button
                   className="btn danger small"
@@ -401,7 +432,8 @@ export default function App() {
 
                 <div className="pl-row">
                   <div className="pl-left">
-                    {computed.totalTare} - 2 KP ({computed.B} × 2)
+                    {computed.totalTare} kg - {tarePerBag} KP ({computed.B} ×{" "}
+                    {tarePerBag})
                   </div>
                 </div>
 
@@ -450,6 +482,11 @@ export default function App() {
                           formatCurrencyEquals(parseFloat(a.amount) || 0)}
                       </div>
                     </div>
+                    {a.note ? (
+                      <div className="pl-row adj-note-row">
+                        <div className="pl-left">{a.note}</div>
+                      </div>
+                    ) : null}
                     <div className="pl-sep" />
                     <div className="pl-row running">
                       <div className="pl-left">
@@ -490,15 +527,23 @@ export default function App() {
               <span>- {formatCurrencyEquals(computed.labourCharge)}</span>
             </div>
             {adjustments.map((a) => (
-              <div className="line small" key={a.id}>
-                <span>
-                  {a.sign === "+" ? "+ " : "- "}
-                  {a.label}
-                </span>
-                <span>
-                  {a.sign === "+" ? "+ " : "- "}
-                  {formatCurrencyEquals(parseFloat(a.amount) || 0)}
-                </span>
+              <div key={a.id}>
+                <div className="line small">
+                  <span>
+                    {a.sign === "+" ? "+ " : "- "}
+                    {a.label}
+                  </span>
+                  <span>
+                    {a.sign === "+" ? "+ " : "- "}
+                    {formatCurrencyEquals(parseFloat(a.amount) || 0)}
+                  </span>
+                </div>
+                {a.note ? (
+                  <div className="line small note" style={{ color: "#6b7280" }}>
+                    <span>{a.note}</span>
+                    <span></span>
+                  </div>
+                ) : null}
               </div>
             ))}
 
