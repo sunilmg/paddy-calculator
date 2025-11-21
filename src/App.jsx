@@ -358,6 +358,7 @@ export default function App() {
               justifyContent: "space-between",
               alignItems: "center",
               gap: 12,
+              marginBottom: 12,
             }}
           >
             <h2 style={{ margin: 0 }}>Summary</h2>
