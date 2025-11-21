@@ -376,7 +376,7 @@ export default function App() {
                 <option value="full">Full (entire page)</option>
               </select>
               <button className="btn" onClick={prepareAndPrint} type="button">
-                Print Summary
+                Print
               </button>
             </div>
           </div>
