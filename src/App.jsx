@@ -151,12 +151,20 @@ export default function App() {
     // set attribute so print CSS positions the .print-target
     root.setAttribute("data-print", printPosition);
 
-    // compute scale to fit the .print-wrapper into quadrant (use viewport halves)
+    // compute scale to fit the .print-wrapper into target area (quadrant or full)
     const wrapper = root.querySelector(".print-target .print-wrapper");
     if (wrapper) {
-      // available space approx: half viewport minus margins
-      const availWidth = Math.max(200, window.innerWidth * 0.5 - 40);
-      const availHeight = Math.max(200, window.innerHeight * 0.5 - 40);
+      // available space depends on selected printPosition: for 'full' use full
+      // viewport minus margins, otherwise use a quadrant (half width/height)
+      let availWidth;
+      let availHeight;
+      if (printPosition === "full") {
+        availWidth = Math.max(200, window.innerWidth - 40);
+        availHeight = Math.max(200, window.innerHeight - 40);
+      } else {
+        availWidth = Math.max(200, window.innerWidth * 0.5 - 40);
+        availHeight = Math.max(200, window.innerHeight * 0.5 - 40);
+      }
       // natural size
       const rect = wrapper.getBoundingClientRect();
       // desired scale to fill quadrant (may be >1 for upscaling)
@@ -205,7 +213,7 @@ export default function App() {
   return (
     <div className="app-root" ref={rootRef}>
       <header>
-        <h1>Paddy Calculator</h1>
+        <h1>MRS Paddy Calculator</h1>
         <p className="subtitle">
           Calculate net paddy weight, amount, labour & borrow adjustments
         </p>
@@ -365,6 +373,7 @@ export default function App() {
                 <option value="top-right">Top right</option>
                 <option value="bottom-left">Bottom left</option>
                 <option value="bottom-right">Bottom right</option>
+                <option value="full">Full (entire page)</option>
               </select>
               <button className="btn" onClick={prepareAndPrint} type="button">
                 Print Summary
@@ -391,7 +400,7 @@ export default function App() {
 
                 <div className="pl-row">
                   <div className="pl-left">
-                    {computed.totalTare} kg - 2 KP ({computed.B} × 2)
+                    {computed.totalTare} - 2 KP ({computed.B} × 2)
                   </div>
                 </div>
 
@@ -399,7 +408,7 @@ export default function App() {
 
                 <div className="pl-row">
                   <div className="pl-left">
-                    {computed.netWeight.toFixed(2)} × {ratePerQuintal || 0} rate
+                    {computed.netWeight.toFixed(2)} × {ratePerQuintal || 0} Rate
                   </div>
                 </div>
 
@@ -413,7 +422,7 @@ export default function App() {
 
                 <div className="pl-row">
                   <div className="pl-left">
-                    {formatCurrencyEquals(computed.labourCharge)} - labour
+                    {formatCurrencyEquals(computed.labourCharge)} - Labour
                     charge ({computed.B} × {labourPerBag || 0})
                   </div>
                 </div>
@@ -456,12 +465,6 @@ export default function App() {
                 <div className="pl-sep" />
 
                 <div className="pl-row final">
-                  <div className="pl-left">
-                    {formatCurrencyEquals(computed.final)}
-                  </div>
-                </div>
-
-                <div className="pl-row final-dup">
                   <div className="pl-left">
                     {formatCurrencyEquals(computed.final)}
                   </div>

@@ -21,6 +21,11 @@ body {
     "Helvetica Neue", Arial;
   margin: 0;
   min-height: 100vh;
+  /* center the app horizontally and vertically */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
   background-color: var(--bg);
   /* background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); */
   color: #0f172a;
@@ -28,8 +33,18 @@ body {
 
 .app-root {
   max-width: 1100px;
-  margin: 24px auto;
+  margin: 0 auto;
   padding: 20px;
+  width: 100%;
+}
+
+/* If viewport height is small, align to top to avoid clipping */
+@media (max-height: 700px) {
+  body {
+    align-items: flex-start;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
 }
 header {
   display: flex;
@@ -316,8 +331,16 @@ input::placeholder {
     visibility: visible;
   }
 
+  /* Use absolute positioning in print mode. Some mobile browsers (Safari) repeat
+     fixed-position elements on every printed page; absolute positioning avoids
+     that behavior while still allowing placement into quadrants. Also ensure the
+     app-root establishes a containing block for absolute positioning during print. */
+  .app-root {
+    position: relative;
+  }
+
   .app-root .print-target {
-    position: fixed;
+    position: absolute;
     width: 50%;
     height: 50%;
     overflow: hidden;
@@ -325,6 +348,9 @@ input::placeholder {
     padding: 6mm;
     background: white;
     color: black;
+    /* avoid breaking the print-target across pages */
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .app-root[data-print="top-left"] .print-target {
@@ -342,6 +368,15 @@ input::placeholder {
   .app-root[data-print="bottom-right"] .print-target {
     bottom: 0;
     right: 0;
+  }
+
+  /* Full page print: use full paper area (respecting @page margins) */
+  .app-root[data-print="full"] .print-target {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 6mm;
   }
 
   /* scale the inner wrapper so content fits the quadrant */
