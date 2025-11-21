@@ -21,11 +21,6 @@ body {
     "Helvetica Neue", Arial;
   margin: 0;
   min-height: 100vh;
-  /* center the app horizontally; on short/mobile viewports align to top to avoid clipping */
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 24px 12px;
   background-color: var(--bg);
   /* background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); */
   color: #0f172a;
@@ -33,17 +28,11 @@ body {
 
 .app-root {
   max-width: 1100px;
-  margin: 0 auto;
+  margin: 24px auto;
   padding: 20px;
-  width: 100%;
 }
 
-/* On tall viewports (desktop), vertically center the app for a nicer layout */
-@media (min-height: 800px) {
-  body {
-    align-items: center;
-  }
-}
+/* (layout centering removed - using original top-aligned flow) */
 header {
   display: flex;
   flex-direction: column;
@@ -70,10 +59,6 @@ header h1 {
   padding: 18px;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  max-width: 100%;
 }
 .results {
   background: linear-gradient(
@@ -341,11 +326,7 @@ input::placeholder {
   }
 }
 
-/* Prevent accidental horizontal overflow on small devices */
-html,
-body {
-  overflow-x: hidden;
-}
+/* keep default overflow behavior; responsive fixes kept elsewhere */
 
 /* Print rules: place the .print-target into one of four quadrants on A4 */
 @page {
