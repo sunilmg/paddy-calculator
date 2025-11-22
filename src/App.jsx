@@ -310,19 +310,27 @@ export default function App() {
       @page { size: A4; margin: 0; }
       html,body{ margin:0; padding:0; }
       body{ font-family: 'Times New Roman', serif; color:#000 }
-      .page{ width:210mm; height:297mm; box-sizing:border-box; padding:10mm; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; grid-template-areas: "b a" "d c"; }
-      .quad{ box-sizing:border-box; padding:5mm; overflow:hidden; page-break-inside:avoid; }
+      .page{ width:210mm; height:297mm; box-sizing:border-box; padding:8mm; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; grid-template-areas: "b a" "d c"; gap:1mm; }
+      .quad{ box-sizing:border-box; padding:1mm; overflow:visible; page-break-inside:avoid; display:flex; flex-direction:column; min-height:0; }
       .pos1{ grid-area: a; }
       .pos2{ grid-area: b; }
       .pos3{ grid-area: c; }
       .pos4{ grid-area: d; }
-      .print-wrapper{ background:white; padding:8px; border-radius:6px; box-sizing:border-box; height:100%; }
-      .print-lines{ padding:8px; line-height:1.4; font-size:14px }
-      .pl-row{ display:flex; justify-content:space-between; align-items:center; padding:4px 0 }
-      .pl-row.header{ font-weight:800; font-size:16px }
-      .pl-sep{ border-top:1px solid #000; height:0; margin:6px 0 }
-      .pl-row.amount .pl-left, .pl-row.final .pl-left{ font-weight:800; font-size:16px }
-      @media print { body{ -webkit-print-color-adjust:exact; print-color-adjust:exact } }
+      .print-wrapper{ background:white; padding:1px; border-radius:4px; box-sizing:border-box; height:100%; display:flex; flex-direction:column; min-height:0; overflow:visible; }
+      .print-lines{ line-height:1.3; font-size:11px; flex:1; display:flex; flex-direction:column; overflow:visible; }
+      .pl-row{ display:flex; justify-content:space-between; align-items:center; padding:2px 0; min-height:18px; flex-shrink:0; }
+      .pl-row.header{ font-weight:800; font-size:12px; }
+      .pl-sep{ border-top:1px solid #000; height:0; margin:4px 0; flex-shrink:0; }
+      .pl-row.amount .pl-left, .pl-row.final .pl-left{ font-weight:800; font-size:12px; }
+      .pl-row.running{ font-size:11px; }
+      .pl-row.adj-line{ font-size:11px; }
+      .pl-row.zeros{ font-size:11px; }
+      @media print { 
+        body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        .quad{ overflow:visible !important; }
+        .print-wrapper{ overflow:visible !important; }
+        .print-lines{ overflow:visible !important; }
+      }
     `;
 
     const renderSnapshot = (s) => {
@@ -333,6 +341,29 @@ export default function App() {
       const amount = formatCurrencyEquals(s.computed?.amount ?? 0);
       const labourCharge = formatCurrencyEquals(s.computed?.labourCharge ?? 0);
       const final = formatCurrencyEquals(s.computed?.final ?? 0);
+
+      // Calculate content length to determine optimal font size
+      const baseRows = 10; // Header, weight, tare, rate, amount, labour, 2x final, zeros, separators
+      const batchRows = (s.batches || []).length;
+      const adjustmentRows = (s.adjustments || []).length;
+      const totalRows = baseRows + batchRows + adjustmentRows;
+
+      // Calculate font size: less content = bigger font (min 12px, max 18px)
+      // Base is 10 rows, so if less than 10, increase font; if more, decrease
+      const baseFontSize = 15;
+      const rowDifference = totalRows - baseRows;
+      // If content is less (negative difference), increase font size up to 18px
+      // If content is more (positive difference), decrease font size down to 12px
+      // Use smaller multiplier (0.12) to make scaling less aggressive and keep fonts larger
+      const fontSize = Math.max(
+        12,
+        Math.min(18, baseFontSize - rowDifference * 0.12)
+      );
+      const lineHeight = Math.max(
+        1.3,
+        Math.min(1.5, 1.4 - rowDifference * 0.006)
+      );
+      const padding = Math.max(4, Math.min(8, 6 - rowDifference * 0.06));
 
       const adjustmentsHtml = (s.adjustments || [])
         .map((a, idx) => {
@@ -379,10 +410,13 @@ export default function App() {
 
       return `
         <div class="print-wrapper print-format">
-          <div class="print-lines">
-            <div class="pl-row header"><div class="pl-left">${
-              s.customerName || "Customer Name"
-            }</div><div class="pl-right">${s.date || ""}</div></div>
+          <div class="print-lines" style="font-size:${fontSize}px; line-height:${lineHeight}; padding:${padding}px;">
+            <div class="pl-row header" style="font-size:${Math.min(
+              fontSize + 2,
+              20
+            )}px;"><div class="pl-left">${
+        s.customerName || "Customer Name"
+      }</div><div class="pl-right">${s.date || ""}</div></div>
             ${batchesHtml}
             <div class="pl-sep"></div>
             <div class="pl-row"><div class="pl-left">${formatCurrencyEquals(
@@ -396,7 +430,10 @@ export default function App() {
         s.ratePerQuintal || 0
       } Rate</div></div>
             <div class="pl-sep"></div>
-            <div class="pl-row amount"><div class="pl-left">${amount}</div></div>
+            <div class="pl-row amount" style="font-size:${Math.min(
+              fontSize + 2,
+              20
+            )}px;"><div class="pl-left">${amount}</div></div>
             <div class="pl-row"><div class="pl-left">${labourCharge} - labour charge (${B} × ${
         s.labourPerBag || 0
       })</div></div>
@@ -404,8 +441,14 @@ export default function App() {
 
             ${adjustmentsHtml}
 
-            <div class="pl-row final"><div class="pl-left">${final}</div></div>
-            <div class="pl-row final"><div class="pl-left">${final}</div></div>
+            <div class="pl-row final" style="font-size:${Math.min(
+              fontSize + 2,
+              20
+            )}px;"><div class="pl-left">${final}</div></div>
+            <div class="pl-row final" style="font-size:${Math.min(
+              fontSize + 2,
+              20
+            )}px;"><div class="pl-left">${final}</div></div>
 
             <div class="pl-sep"></div>
             <div class="pl-row zeros"><div class="pl-left">00000 = 00</div></div>
@@ -458,9 +501,76 @@ export default function App() {
       bodyHtml = `<div class="page">${quads}</div>`;
     }
 
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Print</title><style>${css}</style></head><body>${bodyHtml}</body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Print</title><style>${css}</style></head><body>${bodyHtml}</body></html>`;
 
-    // create a hidden iframe in the current document for printing
+    // Detect mobile device
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // For mobile, use a visible iframe with proper dimensions (mobile browsers need visible content)
+    if (isMobile) {
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.left = "0";
+      iframe.style.top = "0";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.border = "0";
+      iframe.style.zIndex = "9999";
+      iframe.style.backgroundColor = "white";
+      document.body.appendChild(iframe);
+
+      const idoc = iframe.contentWindow?.document;
+      if (!idoc) {
+        alert("Printing is not available in this environment.");
+        try {
+          iframe.remove();
+        } catch (err) {
+          void err;
+        }
+        return;
+      }
+
+      idoc.open();
+      idoc.write(html);
+      idoc.close();
+
+      // Wait for content to load, then print
+      const doPrint = () => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (err) {
+          console.error("Print failed", err);
+        } finally {
+          // Remove iframe after printing dialog is shown
+          setTimeout(() => {
+            try {
+              iframe.remove();
+            } catch (e) {
+              void e;
+            }
+          }, 1000);
+        }
+      };
+
+      // Mobile browsers need more time to render content
+      iframe.onload = () => {
+        setTimeout(doPrint, 500);
+      };
+
+      // Fallback if onload doesn't fire
+      setTimeout(() => {
+        if (idoc.readyState === "complete") {
+          doPrint();
+        }
+      }, 1000);
+      return;
+    }
+
+    // Desktop: use iframe approach
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
     iframe.style.left = "0";
