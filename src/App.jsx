@@ -593,18 +593,6 @@ export default function App() {
                   </div>
                 </div>
               ))}
-
-              <div style={{ marginTop: 6, paddingTop: 6 }}>
-                <div style={{ borderTop: "1px dashed #000", marginTop: 0 }} />
-                <div style={{ fontWeight: 700, marginTop: 8 }}>
-                  {formatCurrencyEquals(computed.W)} kg - {computed.B} bags
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  {formatCurrencyEquals(computed.totalTare)} kg - tare weight
-                  for {computed.B} bags
-                </div>
-                <div style={{ marginTop: 8, borderTop: "2px solid #000" }} />
-              </div>
             </div>
           )}
 
