@@ -1,6 +1,10 @@
 Customer Name             Date
 
-Net weight -         Total bags 
+Net weight -         bags 
+2nd batch Netweight - bags
+3rd batch weight - bags
+-------------------------------
+total weight - total bags 
 tare weight total -  2 KP (total bags * 2kg)
 _________________________________
 net weight minus tare weight total value * rate
@@ -23,7 +27,11 @@ ______________________
 I will give the sample example format here - 
 
 1105.00 kg - 15 bags 
-39 kg.     - 2kp (15 * 30)
+1120.00 kg - 20 bags
+1000.00.kg - 30 bags
+-----------------------
+3225.00 kg - 65 total bags
+130 kg.     - 2kp (15 * 30)
 ---------------------------
 1105 * 2600 rate
 ---------------------------
