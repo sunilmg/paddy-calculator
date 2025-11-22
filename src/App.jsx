@@ -354,7 +354,11 @@ export default function App() {
             <div class="pl-right">${a.note ? a.note : ""}</div>
              
             </div>
-
+            ${
+              s.adjustments.length - 1 === idx
+                ? `<div class="pl-sep"></div>`
+                : ""
+            }
           </div>
         `;
         })
@@ -396,7 +400,6 @@ export default function App() {
             <div class="pl-sep"></div>
 
             ${adjustmentsHtml}
-            <div class="pl-sep"></div>
 
             <div class="pl-row final"><div class="pl-left">${final}</div></div>
             <div class="pl-row final"><div class="pl-left">${final}</div></div>
@@ -963,18 +966,11 @@ export default function App() {
                         {a.note ? a.note : ""}
                       </div>
                     </div>
-
-                    {/* For non-first adjustments, show any note below the label row as before */}
-                    {/* {a.note && idx !== 0 ? (
-                      <div className="pl-row adj-note-row">
-                        <div className="pl-left">{a.note}</div>
-                      </div>
-                    ) : null} */}
-
-                    {/* <div className="pl-sep" /> */}
+                    {adjustments.length - 1 === idx ? (
+                      <div className="pl-sep" />
+                    ) : null}
                   </div>
                 ))}
-                <div className="pl-sep" />
 
                 <div className="pl-row final">
                   <div className="pl-left">
