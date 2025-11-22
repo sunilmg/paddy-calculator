@@ -294,14 +294,17 @@ export default function App() {
       adjustments: JSON.parse(JSON.stringify(adjustments || [])),
       computed,
     };
-    openPrintInIframe([single], { full: printPosition === "full" });
+    openPrintInIframe([single], {
+      full: printPosition === "full",
+      position: printPosition,
+    });
   };
 
   // Helper: build HTML for one or more snapshots and print using a hidden
   // iframe in the same window. This avoids popups while keeping the printed
   // layout isolated from the app's DOM and CSS.
   const openPrintInIframe = (snapshots, opts = {}) => {
-    const { full = false } = opts;
+    const { full = false, position } = opts;
 
     const css = `
       @page { size: A4; margin: 0; }
@@ -418,9 +421,33 @@ export default function App() {
         `<div class="page" style="grid-template-areas: 'a a' 'a a';">` +
         `<div class="quad pos1">${renderSnapshot(snapshots[0])}</div>` +
         `</div>`;
+    } else if (snapshots.length === 1) {
+      // Single snapshot: use position if provided, otherwise default to top-left for queue items
+      let targetPos = 2; // Default to top-left (pos2) for single items
+      if (position && position !== "full") {
+        // Single snapshot with specific position: map position to grid area
+        // pos1 = a = top-right, pos2 = b = top-left, pos3 = c = bottom-right, pos4 = d = bottom-left
+        // Grid layout: "b a" (top row: left=b, right=a), "d c" (bottom row: left=d, right=c)
+        const positionMap = {
+          "top-left": 2, // top-left selection → print in top-left (pos2 = grid-area b)
+          "top-right": 1, // top-right selection → print in top-right (pos1 = grid-area a)
+          "bottom-left": 4, // bottom-left selection → print in bottom-left (pos4 = grid-area d)
+          "bottom-right": 3, // bottom-right selection → print in bottom-right (pos3 = grid-area c)
+        };
+        targetPos = positionMap[position] || 2; // Default to top-left if position not found
+      }
+      bodyHtml =
+        `<div class="page">` +
+        `<div class="quad pos${finalPos}">${renderSnapshot(
+          snapshots[0]
+        )}</div>` +
+        `</div>`;
     } else {
-      // Build quadrants HTML using the requested mapping: pos1->a(top-right), pos2->b(top-left), pos3->c(bottom-right), pos4->d(bottom-left)
-      const quads = [1, 2, 3, 4]
+      // Build quadrants HTML with custom order: 1st→top-left, 2nd→top-right, 3rd→bottom-left, 4th→bottom-right
+      // pos1 = a = top-right, pos2 = b = top-left, pos3 = c = bottom-right, pos4 = d = bottom-left
+      // Order: [2, 1, 4, 3] means: idx0→pos2(top-left), idx1→pos1(top-right), idx2→pos4(bottom-left), idx3→pos3(bottom-right)
+      const positionOrder = [2, 1, 4, 3];
+      const quads = positionOrder
         .map((n, idx) => {
           const snap = snapshots[idx];
           return `<div class="quad pos${n}">${
