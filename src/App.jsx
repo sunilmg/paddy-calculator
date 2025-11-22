@@ -438,7 +438,7 @@ export default function App() {
       }
       bodyHtml =
         `<div class="page">` +
-        `<div class="quad pos${finalPos}">${renderSnapshot(
+        `<div class="quad pos${targetPos}">${renderSnapshot(
           snapshots[0]
         )}</div>` +
         `</div>`;
