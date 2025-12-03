@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import printJS from "print-js";
 import "./App.css";
 
 function formatCurrencyEquals(num) {
@@ -516,124 +515,83 @@ export default function App() {
 </body>
 </html>`;
 
-    // Create a blob URL for the HTML content
-    const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    // Use iframe approach - hidden but accessible to print engine (works on mobile)
+    // This provides better UX than popups while being reliable
+    const iframe = document.createElement("iframe");
+    iframe.id = "print-iframe-temp";
 
-    // Detect mobile device
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
+    // Style iframe to be hidden but still accessible
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "1px";
+    iframe.style.height = "1px";
+    iframe.style.border = "0";
+    iframe.style.opacity = "0";
+    iframe.style.pointerEvents = "none";
+    iframe.setAttribute("aria-hidden", "true");
 
-    if (isMobile) {
-      // For mobile: use print-js with raw HTML which works better on mobile
-      try {
-        printJS({
-          printable: bodyHtml,
-          type: "raw-html",
-          style: css,
-          targetStyles: ["*"],
-          scanStyles: false,
-          honorMarginPadding: false,
-          honorColor: true,
-          onPrintDialogClose: () => {
-            URL.revokeObjectURL(url);
-          },
-          onError: (error) => {
-            console.error("Print-js error:", error);
-            URL.revokeObjectURL(url);
-            // Fallback: open in new window
-            const printWindow = window.open(url, "_blank");
-            if (printWindow) {
-              printWindow.onload = () => {
-                setTimeout(() => {
-                  printWindow.print();
-                  setTimeout(() => {
-                    printWindow.close();
-                    URL.revokeObjectURL(url);
-                  }, 1000);
-                }, 500);
-              };
-            }
-          },
-        });
-      } catch (error) {
-        console.error("Print error:", error);
-        // Fallback: open in new window
-        const printWindow = window.open(url, "_blank");
-        if (printWindow) {
-          printWindow.onload = () => {
-            setTimeout(() => {
-              printWindow.print();
-              setTimeout(() => {
-                printWindow.close();
-                URL.revokeObjectURL(url);
-              }, 1000);
-            }, 500);
-          };
-        }
-      }
-    } else {
-      // For desktop: use iframe approach (more reliable)
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.left = "0";
-      iframe.style.top = "0";
-      iframe.style.width = "1px";
-      iframe.style.height = "1px";
-      iframe.style.border = "0";
-      iframe.style.overflow = "hidden";
-      iframe.setAttribute("aria-hidden", "true");
-      iframe.style.visibility = "hidden";
-      document.body.appendChild(iframe);
+    document.body.appendChild(iframe);
 
-      iframe.onload = () => {
+    // Function to clean up iframe
+    const cleanup = () => {
+      setTimeout(() => {
         try {
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        } catch (e) {
+          console.error("Error cleaning up iframe:", e);
+        }
+      }, 1000);
+    };
+
+    // Load content and print
+    const doPrint = () => {
+      try {
+        if (iframe.contentWindow && iframe.contentDocument) {
           iframe.contentWindow.focus();
           iframe.contentWindow.print();
-        } catch (err) {
-          console.error("Print failed", err);
-        } finally {
-          setTimeout(() => {
-            try {
-              URL.revokeObjectURL(url);
-              if (iframe.parentNode) {
-                iframe.parentNode.removeChild(iframe);
-              }
-            } catch (e) {
-              void e;
-            }
-          }, 500);
+          cleanup();
+        } else {
+          console.error("Iframe content not accessible");
+          cleanup();
         }
+      } catch (err) {
+        console.error("Print failed:", err);
+        cleanup();
+      }
+    };
+
+    // Write content to iframe
+    try {
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(fullHtml);
+      iframe.contentDocument.close();
+
+      // Wait for content to load
+      iframe.onload = () => {
+        setTimeout(doPrint, 300);
       };
 
-      iframe.src = url;
-
-      // Fallback timeout
+      // Fallback: try printing after a delay even if onload doesn't fire
       setTimeout(() => {
         if (
           iframe.contentDocument &&
           iframe.contentDocument.readyState === "complete"
         ) {
-          try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-          } catch (err) {
-            console.error("Print failed", err);
-          }
-          setTimeout(() => {
-            try {
-              URL.revokeObjectURL(url);
-              if (iframe.parentNode) {
-                iframe.parentNode.removeChild(iframe);
-              }
-            } catch (e) {
-              void e;
-            }
-          }, 500);
+          doPrint();
+        } else {
+          // If still not ready, try anyway
+          setTimeout(doPrint, 500);
         }
       }, 1000);
+    } catch (err) {
+      console.error("Error writing to iframe:", err);
+      cleanup();
+      alert(
+        "Printing failed. Please try again or use your browser's print option."
+      );
     }
   };
   return (

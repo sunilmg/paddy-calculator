@@ -67,6 +67,9 @@ header h1 {
   padding: 18px;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
 }
 .results {
   background: linear-gradient(
